@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Day12
 {
@@ -9,11 +8,18 @@ namespace Day12
         public Dictionary<string, List<string>> _graph = new();
         public int PathsCount { get; set; }
         public Dictionary<string, Boolean> _visited = new();
+        public Dictionary<string, int> _visitCount = new();
 
         public void CreateGraph(string[] input)
         {
             foreach (var line in input)
                 AddEdge(line);
+
+            foreach (var v in _graph)
+            {
+                _visitCount.Add(v.Key, 0);
+                _visited.Add(v.Key,false);
+            }
         }
 
         public void PrintGraph()
@@ -34,52 +40,22 @@ namespace Day12
             string v1 = vertices[0];
             string v2 = vertices[1];
 
-            foreach (var v in new List<string> {v1, v2})
-            {
-                if (!_visited.ContainsKey(v))
-                    _visited.Add(v, false);
-            }
-
-            if (_graph.ContainsKey(v1))
-            {
-                if (!_graph[v1].Contains(v2))
-                    _graph[v1].Add(v2);
-            }
+            if (_graph.ContainsKey(v1) && !_graph[v1].Contains(v2))
+                _graph[v1].Add(v2);
             else
                 _graph.Add(v1, new List<string> {v2});
 
-            if (_graph.ContainsKey(v2))
-            {
-                if (!_graph[v2].Contains(v1))
-                    _graph[v2].Add(v1);
-            }
+            if (_graph.ContainsKey(v2) && !_graph[v2].Contains(v1))
+                _graph[v2].Add(v1);
             else
                 _graph.Add(v2, new List<string> {v1});
-        }
-        
-        public Boolean ValidatePath(List<string> path)
-        {
-            path = path.Where(x => Char.IsLower(x[0])).ToList();
-
-
-            var g = path.GroupBy(i => i)
-                .OrderByDescending(group => group.Count()).ToList();
-            if (g.Count >= 2)
-            {
-                if (g[0].Count() > 2)
-                    return false;
-
-                if (g[0].Count() >= 2 && g[1].Count() >= 2)
-                    return false;
-            }
-
-            return true;
         }
 
         public int FindAllPaths(string type)
         {
             PathsCount = 0;
             List<string> path = new List<string>();
+
             path.Add("start");
 
             if (type.Equals("part1"))
@@ -114,29 +90,44 @@ namespace Day12
 
             _visited[v1] = false;
         }
-        
+
         private void FindAllPathsRecPart2(string v1, string v2, List<string> path)
         {
-            if (!ValidatePath(path))
-                return;
-
             if (v1.Equals(v2))
             {
                 PathsCount++;
                 return;
             }
 
+            if (char.IsLower(v1[0]))
+                _visitCount[v1]++;
+
             foreach (var i in _graph[v1])
             {
                 if (!i.Equals("start"))
                 {
+                    if (Char.IsLower(i[0]) && (_visitCount[i] == 1 && SmallCaveVisitedTwice() || _visitCount[i] == 2))
+                        continue;
+
                     path.Add(i);
                     FindAllPathsRecPart2(i, v2, path);
                     path.Remove(i);
                 }
             }
+
+            _visitCount[v1]--;
         }
 
+        public Boolean SmallCaveVisitedTwice()
+        {
+            foreach (var v in _visitCount)
+            {
+                if (Char.IsLower(v.Key[0]) && v.Value == 2)
+                    return true;
+            }
+
+            return false;
+        }
     }
 
     class Program
