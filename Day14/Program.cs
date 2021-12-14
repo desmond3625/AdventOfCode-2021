@@ -31,8 +31,11 @@ namespace Day14
 
         public long Result(int numberOfSteps)
         {
-            foreach (var l in _elemCount)
-                _elemCount[l.Key] = 0;
+            foreach (var el in _elemCount.Keys)
+                _elemCount[el] = 0;
+
+            foreach (var p in _pairCount.Keys)
+                _pairCount[p] = 0;
 
             for (int i = 0; i < _polymer.Length - 1; i++)
             {
@@ -40,8 +43,7 @@ namespace Day14
                 _pairCount[pair]++;
             }
 
-            for (int i = 0; i < numberOfSteps; i++)
-                Step();
+            for (int i = 0; i < numberOfSteps; i++) Step();
 
             return Count();
         }
