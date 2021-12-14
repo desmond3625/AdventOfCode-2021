@@ -62,7 +62,7 @@ namespace Day12
                 FindAllPathsRecPart1("start", "end", path);
 
             else if (type.Equals("part2"))
-                FindAllPathsRecPart2("start", "end", path);
+                FindAllPathsRecPart2("start", "end", path,false);
 
             return PathsCount;
         }
@@ -91,7 +91,7 @@ namespace Day12
             _visited[v1] = false;
         }
 
-        private void FindAllPathsRecPart2(string v1, string v2, List<string> path)
+        private void FindAllPathsRecPart2(string v1, string v2, List<string> path, bool smallCaveVisitedTwice)
         {
             if (v1.Equals(v2))
             {
@@ -100,33 +100,26 @@ namespace Day12
             }
 
             if (char.IsLower(v1[0]))
+            {
                 _visitCount[v1]++;
-
+                if (_visitCount[v1] == 2)
+                    smallCaveVisitedTwice = true;
+            }
+            
             foreach (var i in _graph[v1])
             {
                 if (!i.Equals("start"))
                 {
-                    if (Char.IsLower(i[0]) && (_visitCount[i] == 1 && SmallCaveVisitedTwice() || _visitCount[i] == 2))
+                    if (Char.IsLower(i[0]) && (_visitCount[i] == 1 && smallCaveVisitedTwice || _visitCount[i] == 2))
                         continue;
 
                     path.Add(i);
-                    FindAllPathsRecPart2(i, v2, path);
+                    FindAllPathsRecPart2(i, v2, path, smallCaveVisitedTwice);
                     path.Remove(i);
                 }
             }
 
             _visitCount[v1]--;
-        }
-
-        public Boolean SmallCaveVisitedTwice()
-        {
-            foreach (var v in _visitCount)
-            {
-                if (Char.IsLower(v.Key[0]) && v.Value == 2)
-                    return true;
-            }
-
-            return false;
         }
     }
 
