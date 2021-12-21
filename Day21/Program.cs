@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Day21
 {
     class Dice
     {
-        public int Value { get; set; }
+        private int Value { get; set; }
 
         public int Roll()
         {
@@ -17,14 +18,12 @@ namespace Day21
 
     class Player
     {
-        public int ID { get; set; }
         public int Score { get; set; }
         public int StartPos { get; set; }
         public int CurrPos { get; set; }
 
-        public Player(int id, int startPos)
+        public Player(int startPos)
         {
-            ID = id;
             Score = 0;
             StartPos = startPos;
             CurrPos = startPos;
@@ -41,11 +40,6 @@ namespace Day21
 
             Score += CurrPos;
         }
-
-        public override string ToString()
-        {
-            return "Player " + ID + ", current position: " + CurrPos + ", score: " + Score;
-        }
     }
 
     class Solution
@@ -53,16 +47,18 @@ namespace Day21
         private Player _player1;
         private Player _player2;
         private Dice _dice;
-        
+        private readonly List<int> _frequencies = new() {1, 3, 6, 7, 6, 3, 1};
+        private readonly List<int> _outcomes = new() {3, 4, 5, 6, 7, 8, 9};
+
         public void SetGame(string[] input)
         {
-            _player1 = new Player(1, Int32.Parse(input[0].Split(":")[1]));
-            _player2 = new Player(2, Int32.Parse(input[1].Split(":")[1]));
+            _player1 = new Player(Int32.Parse(input[0].Split(":")[1]));
+            _player2 = new Player(Int32.Parse(input[1].Split(":")[1]));
             _dice = new Dice();
         }
 
 
-        public void Play()
+        public void Part1()
         {
             int totalRolls = 0;
             int loserScore = 0;
@@ -88,6 +84,85 @@ namespace Day21
 
             Console.WriteLine(totalRolls * loserScore);
         }
+
+        private int Next(int curr, int hops)
+        {
+            if ((curr + hops) % 10 == 0)
+                return 10;
+
+            return (curr + hops) % 10;
+        }
+
+        public void Part2()
+        {
+            long[,,,] states = new long[11, 11, 21, 21];
+            long player1Wins = 0;
+            long player2Wins = 0;
+            long gamesLeft = 1;
+
+            states[_player1.StartPos, _player2.StartPos, 0, 0] = 1;
+            
+            bool currPlayerFirst = true;
+
+            while (gamesLeft > 0) 
+            {
+                long[,,,] newStates = new long[11, 11, 21, 21];
+                gamesLeft = 0;
+                
+                for (int i = 0; i < 11; i++)
+                {
+                    for (int j = 0; j < 11; j++)
+                    {
+                        for (int k = 0; k < 21; k++)
+                        {
+                            for (int l = 0; l < 21; l++)
+                            {
+                                long universesNum = states[i, j, k, l];
+
+                                if (currPlayerFirst)
+                                {
+                                    for (int m = 0; m < 7; m++)
+                                    {
+                                        int nextPos = Next(i, _outcomes[m]);
+                                        int newPoints = k + nextPos;
+                                        if (newPoints >= 21)
+                                        {
+                                            player1Wins += universesNum * _frequencies[m];
+                                            continue;
+                                        }
+                                        
+                                        newStates[nextPos, j, newPoints, l] += universesNum * _frequencies[m];
+                                        gamesLeft += universesNum * _frequencies[m];
+
+                                    }
+                                }
+                                else
+                                {
+                                    for (int m = 0; m < 7; m++)
+                                    {
+                                        int nextPos = Next(j, _outcomes[m]);
+                                        int newPoints = l + nextPos;
+                                        if (newPoints >= 21)
+                                        {
+                                            player2Wins += universesNum * _frequencies[m];
+                                            continue;
+                                        }
+
+                                        newStates[i, nextPos, k,newPoints] += universesNum * _frequencies[m];
+                                        gamesLeft += universesNum * _frequencies[m];
+
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                currPlayerFirst = !currPlayerFirst;
+                states = newStates;
+            }
+
+            Console.WriteLine(Math.Max(player1Wins,player2Wins));
+        }
     }
 
     class Program
@@ -99,7 +174,8 @@ namespace Day21
 
             Solution s = new Solution();
             s.SetGame(input);
-            s.Play();
+            s.Part1();
+            s.Part2();
         }
     }
 }
